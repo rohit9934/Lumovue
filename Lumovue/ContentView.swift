@@ -8,15 +8,22 @@
 import SwiftUI
 
 struct ContentView: View {
-    var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
-        }
-        .padding()
-    }
+	@StateObject private var overlayManager = OverlayManager()
+	
+	var body: some View {
+		VStack {
+			Button("Lock Screen for 10 Seconds") {
+				overlayManager.showOverlay()
+					
+				
+				// Auto-dismiss after 10 seconds
+				DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
+					overlayManager.dismissOverlay()
+				}
+			}
+		}
+		.frame(width: 300, height: 100)
+	}
 }
 
 #Preview {
