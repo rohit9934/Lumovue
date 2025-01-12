@@ -59,7 +59,35 @@ class OverlayManager: ObservableObject {
 	}
 	
 	func dismissOverlay() {
-		overlayWindows.forEach { $0.orderOut(nil) }
-		overlayWindows.removeAll()
+		overlayWindows.forEach { overlayWindow in
+			// Apply alpha animation for content view
+			if let contentView = overlayWindow.contentView {
+				NSAnimationContext.runAnimationGroup { context in
+					context.duration = 0.5
+					context.allowsImplicitAnimation = true
+					contentView.animator().alphaValue = 0.0 // Fade out content
+				}
+			}
+
+			// Animate background opacity and shrink window (scaled effect)
+			NSAnimationContext.runAnimationGroup { context in
+				context.duration = 0.5
+				context.allowsImplicitAnimation = true
+				overlayWindow.animator().backgroundColor = NSColor.clear.withAlphaComponent(0) // Fade background out
+				
+				// Reduce window size instead of setting frame to 0x0, so it shrinks smoothly
+				let smallSize = NSSize(width: overlayWindow.frame.width * 0.8, height: overlayWindow.frame.height * 0.8)
+				let smallFrame = NSRect(x: overlayWindow.frame.origin.x + (overlayWindow.frame.width - smallSize.width) / 2,
+										y: overlayWindow.frame.origin.y + (overlayWindow.frame.height - smallSize.height) / 2,
+										width: smallSize.width, height: smallSize.height)
+				overlayWindow.animator().setFrame(smallFrame, display: true)
+			}
+
+			// After the animation ends, remove the window
+			DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+				overlayWindow.orderOut(nil) // Close the window after animation
+			}
+		}
+		overlayWindows.removeAll() // Clear the overlay windows array
 	}
 }
