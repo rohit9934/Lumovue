@@ -36,12 +36,22 @@ class OverlayManager: ObservableObject {
 			let hostingView = NSHostingView(rootView: OverlayView(manager: self))
 			overlayWindow.contentView = hostingView
 			
-			// Animate scaling and opacity
+			// Apply alpha animation
+			if let contentView = overlayWindow.contentView {
+				contentView.alphaValue = 0.0
+				NSAnimationContext.runAnimationGroup { context in
+					context.duration = 0.5
+					context.allowsImplicitAnimation = true
+					contentView.animator().alphaValue = 1.0
+				}
+			}
+
+			// Animate scaling and opacity of the window
 			NSAnimationContext.runAnimationGroup { context in
 				context.duration = 0.5
 				context.allowsImplicitAnimation = true
 				overlayWindow.animator().setFrame(screen.frame, display: true)
-				overlayWindow.animator().backgroundColor = NSColor.black.withAlphaComponent(1)
+				overlayWindow.animator().backgroundColor = NSColor.clear.withAlphaComponent(1)
 			}
 
 			return overlayWindow
