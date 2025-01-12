@@ -17,9 +17,6 @@ struct ContentView: View {
 					
 				
 				// Auto-dismiss after 10 seconds
-				DispatchQueue.main.asyncAfter(deadline: .now() + 10) {
-					overlayManager.dismissOverlay()
-				}
 			}
 		}
 		.frame(width: 300, height: 100)
