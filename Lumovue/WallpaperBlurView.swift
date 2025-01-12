@@ -9,7 +9,7 @@ import Foundation
 struct WallpaperBlurView: View {
 	var body: some View {
 		GeometryReader { geometry in
-				Image("Beautiful_London")
+				Image("wallpaper")
 					.resizable()
 					.scaledToFill()
 					.frame(width: geometry.size.width, height: geometry.size.height)
