@@ -6,7 +6,7 @@
 //
 
 import SwiftUI
-
+import Foundation
 struct ContentView: View {
 	@StateObject private var overlayManager = OverlayManager()
 	private let notificationView = NotchNotificationView()
@@ -18,13 +18,20 @@ struct ContentView: View {
 				
 				// Auto-dismiss after 10 seconds
 			}
-			Button("Show Notification") {
-							notificationView.showNotification()
+			HStack {
+				Button("Show Notification") {
+					notificationView.showNotification {
+						overlayManager.showOverlay()
 					}
+				}
+
+			}
+
 		}
 		.frame(width: 300, height: 100)
 		.padding()
 	}
+
 }
 
 #Preview {

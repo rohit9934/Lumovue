@@ -6,11 +6,15 @@
 //
 import Cocoa
 
-import Cocoa
-
 class NotchNotificationController: NSObject {
 	private var window: NSWindow!
 	private var timer: Timer?
+	private var notchWidth: CGFloat = 300
+	private var notchHeight: CGFloat = 0
+	private var isVisible = false
+	private var backgroundView: NSView!
+	private var countdownTimer: Timer?
+	private var remainingTime = 6 // Start with 5 seconds
 
 	override init() {
 		super.init()
@@ -19,8 +23,8 @@ class NotchNotificationController: NSObject {
 
 	private func setupWindow() {
 		let screenFrame = NSScreen.main?.frame ?? .zero
-		let viewWidth: CGFloat = 200
-		let viewHeight: CGFloat = 75
+		let viewWidth: CGFloat = 300
+		let viewHeight: CGFloat = 50
 
 		// Position: Attach the top of the view to the top of the screen (the notch area)
 		let initialY = screenFrame.maxY - 100// Positioning the top of the view at the top of the screen
@@ -44,35 +48,37 @@ class NotchNotificationController: NSObject {
 		window.isOpaque = false
 		window.backgroundColor = .clear
 		window.level = .floating
-
+		
 		// Add VisualEffectView
-		let backgroundView = NSView(frame: initialFrame)
+		backgroundView = NSView(frame: initialFrame)
 		backgroundView.wantsLayer = true
 		backgroundView.layer?.backgroundColor = NSColor.black.cgColor
 		//backgroundView.layer?.cornerRadius = 15
 		backgroundView.layer?.masksToBounds = true
 		applyCustomCorners(to: backgroundView)
 		// Add Content
+		
+		//createUI()
+		// Set content view
+		window.contentView = backgroundView
+	}
+
+	func createUI() {
+		//backgroundView.removeFromSuperview()
+		backgroundView.subviews.forEach { $0.removeFromSuperview() }
 		let stackView = NSStackView()
 		stackView.orientation = .vertical
 		stackView.alignment = .centerX
 		stackView.spacing = 8
 
 		// Title Label
-		let titleLabel = NSTextField(labelWithString: "Hello, you")
-		titleLabel.font = NSFont.boldSystemFont(ofSize: 18)
-		titleLabel.textColor = .white
-		titleLabel.alignment = .center
+		let titleLabel = NSTextField(labelWithString: "The Break will start in \(remainingTime) seconds")
+		titleLabel.font = NSFont.systemFont(ofSize: 16)
+		   titleLabel.textColor = .white
+		   titleLabel.alignment = .center
 
-		// Subtitle Label
-		let subtitleLabel = NSTextField(labelWithString: "Welcome back!")
-		subtitleLabel.font = NSFont.systemFont(ofSize: 14)
-		subtitleLabel.textColor = .white
-		subtitleLabel.alignment = .center
-
-		// Add to Stack
-		stackView.addArrangedSubview(titleLabel)
-		stackView.addArrangedSubview(subtitleLabel)
+		   // Add to Stack
+		   stackView.addArrangedSubview(titleLabel)
 
 		// Add Stack to VisualEffectView
 		backgroundView.addSubview(stackView)
@@ -81,14 +87,23 @@ class NotchNotificationController: NSObject {
 			stackView.centerXAnchor.constraint(equalTo: backgroundView.centerXAnchor),
 			stackView.centerYAnchor.constraint(equalTo: backgroundView.centerYAnchor)
 		])
-
-		// Set content view
-		window.contentView = backgroundView
+		countdownTimer?.invalidate() // Ensure no other timer is running
+			countdownTimer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] timer in
+				guard let self = self else { return }
+				self.remainingTime -= 1
+				titleLabel.stringValue = "The Break will start in \(self.remainingTime) seconds"
+				
+				if self.remainingTime <= 1 {
+					timer.invalidate()
+					//titleLabel.stringValue = "Break Started!"
+					// Optionally, perform further actions when the timer reaches zero
+				}
+			}
 	}
-
-	func showNotification() {
+	func showNotification(timerComplete: @escaping () -> Void) {
 		guard let screenFrame = NSScreen.main?.frame else { return }
-
+		remainingTime = 10
+		createUI()
 		// Calculate final Y position (just below the notch area)
 		let finalY = screenFrame.maxY - 10 // Adjust as necessary for positioning below the notch
 		let initialY = screenFrame.maxY + 10 // Position initially above the screen
@@ -114,7 +129,9 @@ class NotchNotificationController: NSObject {
 		}, completionHandler: {
 			// Optionally, trigger the timer to auto-hide the notification after 5 seconds
 			self.timer?.invalidate()
-			self.timer = Timer.scheduledTimer(withTimeInterval: 5.0, repeats: false) { [weak self] _ in
+			self.timer = Timer.scheduledTimer(withTimeInterval: TimeInterval(self.remainingTime - 1), repeats: false) { [weak self] _ in
+				
+				timerComplete()
 				self?.hideNotification()
 			}
 		})
@@ -143,7 +160,6 @@ class NotchNotificationController: NSObject {
 }
 // MARK: - NSViewControllerRepresentable
 import SwiftUI
-
 struct NotchNotificationView: NSViewControllerRepresentable {
 	class Coordinator: NSObject {
 		var controller: NotchNotificationController?
@@ -152,8 +168,10 @@ struct NotchNotificationView: NSViewControllerRepresentable {
 			self.controller = controller
 		}
 
-		func showNotification() {
-			controller?.showNotification()
+		func showNotification(completion: @escaping ()-> ()) {
+			controller?.showNotification {
+				completion()
+			}
 		}
 	}
 
@@ -173,10 +191,13 @@ struct NotchNotificationView: NSViewControllerRepresentable {
 	}
 	
 	// Use this to trigger showNotification() from the SwiftUI view
-	func showNotification() {
-		makeCoordinator().showNotification()
+	func showNotification(completion: @escaping()-> ()) {
+		makeCoordinator().showNotification {
+			completion()
+		}
 	}
 }
+
 extension NotchNotificationController {
 	func applyCustomCorners(to view: NSView) {
 		let width = view.bounds.width
