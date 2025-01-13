@@ -60,6 +60,7 @@ struct OverlayView: View {
 				timeRemaining -= 1
 			} else {
 				timer?.invalidate() // Stop the timer when it reaches 0
+				manager.dismissOverlay()
 			}
 		}
 	}
