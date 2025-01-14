@@ -9,6 +9,7 @@ import SwiftUI
 import Foundation
 struct ContentView: View {
 	@StateObject private var overlayManager = OverlayManager()
+	private var timerManager = TimerManager()
 	private let notificationView = NotchNotificationView()
 	var body: some View {
 		VStack {
@@ -30,6 +31,9 @@ struct ContentView: View {
 		}
 		.frame(width: 300, height: 100)
 		.padding()
+		.onAppear {
+			timerManager.startTimer()
+		}
 	}
 
 }

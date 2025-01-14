@@ -102,7 +102,7 @@ class NotchNotificationController: NSObject {
 	}
 	func showNotification(timerComplete: @escaping () -> Void) {
 		guard let screenFrame = NSScreen.main?.frame else { return }
-		remainingTime = 10
+		remainingTime = 5
 		createUI()
 		// Calculate final Y position (just below the notch area)
 		let finalY = screenFrame.maxY - 10 // Adjust as necessary for positioning below the notch
